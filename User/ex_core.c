@@ -3,37 +3,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ex_gpio.h"
 #include "ex_adc.h"
+#include "ex_gpio.h"
+#include "ex_protocol.h"
 
 
 
-#define _STATUS_READY 0x00
-#define _STATUS_BUSY 0x01
-
-#define _REG_IODIR_A 0x00
-#define _REG_IODIR_B 0x01
-#define _REG_GPIO_A 0x12
-#define _REG_GPIO_B 0x13
-
-#define _REG_ADC_DATA_0_H 0x20
-#define _REG_ADC_DATA_0_L 0x21
-#define _REG_ADC_DATA_1_H 0x22
-#define _REG_ADC_DATA_1_L 0x23
-#define _REG_ADC_DATA_2_H 0x24
-#define _REG_ADC_DATA_2_L 0x25
-#define _REG_ADC_DATA_3_H 0x26
-#define _REG_ADC_DATA_3_L 0x27
-#define _REG_ADC_DATA_4_H 0x28
-#define _REG_ADC_DATA_4_L 0x29
-#define _REG_ADC_DATA_5_H 0x2A
-#define _REG_ADC_DATA_5_L 0x2B
-#define _REG_ADC_DATA_6_H 0x2C
-#define _REG_ADC_DATA_6_L 0x2D
-#define _REG_ADC_DATA_7_H 0x2E
-#define _REG_ADC_DATA_7_L 0x2F
-#define _REG_ADC_CFG 0x30
-#define _REG_ADC_STATUS 0x31
+#define _BIT_VALUE(byte, bit) ((((byte) >> (bit)) & 0x01))
+#define _CMP_BITS(a, b, bit) ((((a) >> (bit)) & 0x01) == (((b) >> (bit)) & 0x01))
 
 
 
@@ -47,40 +24,31 @@ typedef struct
 	uint16_t adc_data;
 	uint16_t adc_status;
 	uint8_t read_reg_val;
+	bool have_read_adc;
 } _registers_t;
 
 
 
-static _registers_t _regs = {0};
-// static uint8_t _data_reg = _STATUS_BUSY;
-
-
-
-#define _FOR_ALL_PINS(port_val) {	\
-	for(int pin = 0; pin < 8; pin++){	\
-		const int val = (port_val >> pin) & 0x01;
-
-#define _END_ALL_PINS }}
-
-#define _BIT_VALUE(byte, bit) ((((byte) >> (bit)) & 0x01))
-#define _CMP_BITS(a, b, bit) ((((a) >> (bit)) & 0x01) == (((b) >> (bit)) & 0x01))
+static _registers_t _regs = {
+	.have_read_adc = true,
+};
 
 
 
 static void _adc_cb(uint16_t val){
 	_regs.adc_data = val;
-	_regs.adc_status = _STATUS_READY;
+	_regs.adc_status = EX_PROTOCOL_STATUS_READY;
 }
 
 
 
 static void _write_io_reg(uint8_t reg, uint8_t port_value){
 	for(int bit = 0; bit < 8; bit++){
-		const int pin = bit + (reg == _REG_IODIR_A ? 0 : 8);
+		const int pin = bit + (reg == EX_PROTOCOL_REG_IODIR_A ? 0 : 8);
 		//only if they differ from current mode
-		// if(!_CMP_BITS(reg == _REG_IODIR_A ? _regs.io_a : _regs.io_b, port_value, bit)){
+		// if(!_CMP_BITS(reg == EX_PROTOCOL_REG_IODIR_A ? _regs.io_a : _regs.io_b, port_value, bit)){
 			// // if this bit is ADC then skip it
-			// if(ex_gpio_is_adc(reg == _REG_IODIR_A ? EX_GPIO_PORT_0 : EX_GPIO_PORT_1, bit)){
+			// if(ex_gpio_is_adc(reg == EX_PROTOCOL_REG_IODIR_A ? EX_GPIO_PORT_0 : EX_GPIO_PORT_1, bit)){
 			// 	continue;
 			// }
 
@@ -95,7 +63,7 @@ static void _write_io_reg(uint8_t reg, uint8_t port_value){
 		// }
 	}
 
-	if(reg == _REG_IODIR_A){
+	if(reg == EX_PROTOCOL_REG_IODIR_A){
 		_regs.io_a = port_value;
 	}else{
 		_regs.io_b = port_value;
@@ -105,16 +73,16 @@ static void _write_io_reg(uint8_t reg, uint8_t port_value){
 static void _write_gpio_reg(uint8_t reg, uint8_t port_value){
 	for(int pin = 0; pin < 8; pin++){
 		//only if configured as output
-		// if(_BIT_VALUE(reg == _REG_GPIO_A ? _regs.io_a : _regs.io_b, pin)){
+		// if(_BIT_VALUE(reg == EX_PROTOCOL_REG_GPIO_A ? _regs.io_a : _regs.io_b, pin)){
 			// if this pin is ADC then skip it
-			// if(ex_gpio_is_adc(reg == _REG_IODIR_A ? EX_GPIO_PORT_0 : EX_GPIO_PORT_1, pin)){
+			// if(ex_gpio_is_adc(reg == EX_PROTOCOL_REG_IODIR_A ? EX_GPIO_PORT_0 : EX_GPIO_PORT_1, pin)){
 			// 	continue;
 			// }
-			ex_gpio_output_pin_set(pin + (reg == _REG_GPIO_A ? 0 : 8), _BIT_VALUE(port_value, pin));
+			ex_gpio_output_pin_set(pin + (reg == EX_PROTOCOL_REG_GPIO_A ? 0 : 8), _BIT_VALUE(port_value, pin));
 		// }
 	}
 
-	if(reg == _REG_GPIO_A){
+	if(reg == EX_PROTOCOL_REG_GPIO_A){
 		_regs.gpio_a = port_value;
 	}else{
 		_regs.gpio_a = port_value;
@@ -137,10 +105,15 @@ static void _write_adc_cfg_reg(uint8_t port_value)
 	_regs.adc_io = port_value;
 }
 
-// static void _write_adc_data(uint8_t pin_value)
-// {
-// 	ex_adc_read(pin_value);
-// }
+static void _trigger_adc_call(int pin)
+{
+	//only if the pin is ADC, and adc was read before
+	if(_regs.have_read_adc && _BIT_VALUE(_regs.adc_io, pin)){
+		_regs.adc_status = EX_PROTOCOL_STATUS_BUSY;
+		_regs.have_read_adc = false;
+		ex_adc_read_irq(pin, &_adc_cb);
+	}
+}
 
 
 
@@ -148,17 +121,17 @@ void ex_core_write(uint8_t reg, uint8_t value)
 {
 	switch(reg)
 	{
-		case _REG_IODIR_A:
-		case _REG_IODIR_B:
+		case EX_PROTOCOL_REG_IODIR_A:
+		case EX_PROTOCOL_REG_IODIR_B:
 			_write_io_reg(reg, value);
 			break;
 
-		case _REG_GPIO_A:
-		case _REG_GPIO_B:
+		case EX_PROTOCOL_REG_GPIO_A:
+		case EX_PROTOCOL_REG_GPIO_B:
 			_write_gpio_reg(reg, value);
 			break;
 		
-		case _REG_ADC_CFG:
+		case EX_PROTOCOL_REG_ADC_CFG:
 			_write_adc_cfg_reg(value);
 			break;
 	}
@@ -166,134 +139,91 @@ void ex_core_write(uint8_t reg, uint8_t value)
 
 void ex_core_set_read_reg(uint8_t reg)
 {
+	_regs.read_reg_val = reg;
+
 	//do stuff like adc calls
 	switch (reg)
 	{
-		case _REG_ADC_DATA_0_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 0)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(0, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_0_H:
+			_trigger_adc_call(0);
 			break;
 
-		case _REG_ADC_DATA_1_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 1)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(1, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_1_H:
+			_trigger_adc_call(1);
 			break;
 
-		case _REG_ADC_DATA_2_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 2)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(2, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_2_H:
+			_trigger_adc_call(2);
 			break;
 
-		case _REG_ADC_DATA_3_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 3)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(3, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_3_H:
+			_trigger_adc_call(3);
 			break;
 
-		case _REG_ADC_DATA_4_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 4)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(4, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_4_H:
+			_trigger_adc_call(4);
 			break;
 
-		case _REG_ADC_DATA_5_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 5)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(5, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_5_H:
+			_trigger_adc_call(5);
 			break;
 
-		case _REG_ADC_DATA_6_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 6)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(6, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_6_H:
+			_trigger_adc_call(6);
 			break;
 
-		case _REG_ADC_DATA_7_H:
-			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 7)){
-				_regs.adc_status = _STATUS_BUSY;
-				ex_adc_read_irq(7, &_adc_cb);
-			}
+		case EX_PROTOCOL_REG_ADC_DATA_7_H:
+			_trigger_adc_call(7);
 			break;
 	
 		default:
 			break;
 	}
-
-	_regs.read_reg_val = reg;
 }
 
 uint8_t ex_core_read()
 {
 	switch(_regs.read_reg_val)
 	{
-		case _REG_IODIR_A:
+		case EX_PROTOCOL_REG_IODIR_A:
 			return _regs.io_a;
-		case _REG_IODIR_B:
+		case EX_PROTOCOL_REG_IODIR_B:
 			return _regs.io_b;
 
-		case _REG_GPIO_A:
+		case EX_PROTOCOL_REG_GPIO_A:
 			return ex_gpio_input_read(EX_GPIO_PORT_0);
 
-		case _REG_GPIO_B:
+		case EX_PROTOCOL_REG_GPIO_B:
 			return ex_gpio_input_read(EX_GPIO_PORT_1);
 		
-		
-		case _REG_ADC_DATA_0_H:
-		case _REG_ADC_DATA_1_H:
-		case _REG_ADC_DATA_2_H:
-		case _REG_ADC_DATA_3_H:
-		case _REG_ADC_DATA_4_H:
-		case _REG_ADC_DATA_5_H:
-		case _REG_ADC_DATA_6_H:
-		case _REG_ADC_DATA_7_H:
+		case EX_PROTOCOL_REG_ADC_DATA_0_H:
+		case EX_PROTOCOL_REG_ADC_DATA_1_H:
+		case EX_PROTOCOL_REG_ADC_DATA_2_H:
+		case EX_PROTOCOL_REG_ADC_DATA_3_H:
+		case EX_PROTOCOL_REG_ADC_DATA_4_H:
+		case EX_PROTOCOL_REG_ADC_DATA_5_H:
+		case EX_PROTOCOL_REG_ADC_DATA_6_H:
+		case EX_PROTOCOL_REG_ADC_DATA_7_H:
+			_regs.have_read_adc = true;
 			return (_regs.adc_data >> 8) & 0xFF;
 		
-		case _REG_ADC_DATA_0_L:
-		case _REG_ADC_DATA_1_L:
-		case _REG_ADC_DATA_2_L:
-		case _REG_ADC_DATA_3_L:
-		case _REG_ADC_DATA_4_L:
-		case _REG_ADC_DATA_5_L:
-		case _REG_ADC_DATA_6_L:
-		case _REG_ADC_DATA_7_L:
+		case EX_PROTOCOL_REG_ADC_DATA_0_L:
+		case EX_PROTOCOL_REG_ADC_DATA_1_L:
+		case EX_PROTOCOL_REG_ADC_DATA_2_L:
+		case EX_PROTOCOL_REG_ADC_DATA_3_L:
+		case EX_PROTOCOL_REG_ADC_DATA_4_L:
+		case EX_PROTOCOL_REG_ADC_DATA_5_L:
+		case EX_PROTOCOL_REG_ADC_DATA_6_L:
+		case EX_PROTOCOL_REG_ADC_DATA_7_L:
 			return _regs.adc_data & 0xFF;
 
-		case _REG_ADC_CFG:
+		case EX_PROTOCOL_REG_ADC_CFG:
 			return _regs.adc_io;
 		
-		case _REG_ADC_STATUS:
+		case EX_PROTOCOL_REG_ADC_STATUS:
 			return _regs.adc_status;
 		
 		default:
 			return 0;
 	}
 }
-
-// void ex_core_set_data(uint8_t* data, int length)
-// {
-// 	memcpy(_buffer.data, data, length);
-// 	_buffer.length = length;
-// 	_buffer.index = 0;
-// }
-
-// void ex_core_set_busy()
-// {
-	// uint8_t data = _STATUS_BUSY;
-	// ex_core_set_data(&data, 1);
-	
-// }
-
-// void ex_core_clear_busy()
-// {
-// 	_regs.adc_status = _STATUS_READY;
-// }
