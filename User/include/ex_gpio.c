@@ -8,110 +8,73 @@
 
 
 
-static GPIO_TypeDef* _map_to_gpio_port(ex_gpio_port_t port, int pin)
+static GPIO_TypeDef* _TABLE_IDX_TO_PORT[EX_GPIO_MAX_PIN] = {
+	GPIOD, GPIOD, GPIOD, GPIOD, GPIOD, GPIOD, GPIOD, GPIOD,
+	GPIOA, GPIOA, GPIOC, GPIOC, GPIOC, GPIOC, GPIOC, GPIOC
+};
+
+static const int _TABLE_IDX_TO_PIN[EX_GPIO_MAX_PIN] = {
+	GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7,
+	GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_1, GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7
+};
+
+
+
+static GPIO_TypeDef* _TABLE_ADC_IDX_TO_PORT[EX_GPIO_ADC_MAX_PIN] = {
+	GPIOD, GPIOD, GPIOD, GPIOA, GPIOA, GPIOD, GPIOD, GPIOC,
+};
+
+static const int _TABLE_ADC_IDX_TO_PIN[EX_GPIO_ADC_MAX_PIN] = {
+	GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_2, GPIO_Pin_3, GPIO_Pin_4,
+};
+
+static const uint8_t _TABLE_ADC_IDX_TO_CHANNEL[EX_GPIO_ADC_MAX_PIN] = {
+	ADC_Channel_7, ADC_Channel_5, ADC_Channel_6, ADC_Channel_1,
+	ADC_Channel_0, ADC_Channel_3, ADC_Channel_4, ADC_Channel_2
+};
+
+
+
+
+static int _TABLE_IDX_TO_ADC_IDX[EX_GPIO_MAX_PIN] = {
+	EX_GPIO_ILLEGAL_PIN, EX_GPIO_ILLEGAL_PIN, 5, 6, 0, 1, 2, EX_GPIO_ILLEGAL_PIN,
+	3, 4, EX_GPIO_ILLEGAL_PIN, EX_GPIO_ILLEGAL_PIN, 7, EX_GPIO_ILLEGAL_PIN, EX_GPIO_ILLEGAL_PIN, EX_GPIO_ILLEGAL_PIN
+};
+
+static int _TABLE_ADC_IDX_TO_IDX[EX_GPIO_ADC_MAX_PIN] = {
+	4, 5, 6, 8, 9, 2, 3, 12
+};
+
+
+
+static ex_gpio_adc_cb_t _adc_val_cb = NULL;
+
+
+
+
+static GPIO_TypeDef* _map_to_gpio_port(int pin)
 {
-	if(port == EX_GPIO_PORT_0){
-		return GPIOD;
-	}
-
-	if(pin == 0 || pin == 1){
-		return GPIOA;
-	}
-
-	return GPIOC;
+	return _TABLE_IDX_TO_PORT[pin];
 }
 
-static int _map_to_gpio_pin(ex_gpio_port_t port, int pin)
+static int _map_to_gpio_pin(int pin)
 {
-	//GPIOD
-	if(port == EX_GPIO_PORT_0){
-		return 1 << pin;
-	}
-
-	switch (pin)
-	{
-		//GPIOA
-		case 0: case 1:
-			return 1 << (pin + 1);
-		
-		//GPIOC
-		case 2:
-			return 1;
-		
-		default:
-			return 1 << pin;
-	}
+	return _TABLE_IDX_TO_PIN[pin];
 }
 
 static GPIO_TypeDef* _map_adc_pin_to_gpio_port(int pin)
 {
-	switch(pin)
-	{
-		case 0: case 1: case 2: case 5: case 6:
-			return GPIOD;
-		
-		case 3: case 4:
-			return GPIOA;
-
-		default:		
-			return GPIOC;
-	}
+	return _TABLE_ADC_IDX_TO_PORT[pin];
 }
 
 static int _map_adc_pin_to_gpio_pin(int pin)
 {
-	switch (pin)
-	{
-		//GPIOD
-		case 0: case 1: case 2:
-			return 1 << (pin + 4);
-		
-		//GPIOA
-		case 3: case 4:
-			return 1 << (pin - 2);
-		
-		//GPIOD
-		case 5: case 6:
-			return 1 << (pin - 3);
-		
-		//GPIOC
-		default:
-			return 1 << (pin - 3);
-	}
+	return _TABLE_ADC_IDX_TO_PIN[pin];
 }
 
 static int _map_adc_pin_to_channel(int pin)
 {
-	switch (pin)
-	{
-		//GPIOD
-		case 0:
-			return ADC_Channel_7;
-		
-		case 1:
-			return ADC_Channel_5;
-
-		case 2:
-			return ADC_Channel_6;
-		
-		case 3:
-			return ADC_Channel_1;
-
-		case 4:
-			return ADC_Channel_0;
-		
-		case 5:
-			return ADC_Channel_3;
-		
-		case 6:
-			return ADC_Channel_4;
-		
-		case 7:
-			 return ADC_Channel_2;
-		//GPIOC
-		default:
-			return ADC_Channel_2;
-	}
+	return _TABLE_ADC_IDX_TO_CHANNEL[pin];
 }
 
 
@@ -120,61 +83,78 @@ void ex_gpio_init()
 {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOC | RCC_APB2Periph_GPIOD, ENABLE);
 
-	for(ex_gpio_port_t port = 0; port < EX_GPIO_PORT_MAX; port++)
-	{
-		for(int pin = 0; pin < 8; pin++)
+	// for(ex_gpio_port_t port = 0; port < EX_GPIO_PORT_MAX; port++)
+	// {
+		for(int pin = 0; pin < EX_GPIO_MAX_PIN; pin++)
 		{
-			ex_gpio_set_mode(port, pin, false);
+			ex_gpio_set_mode(pin, false);
 		}
-	}
+	// }
 }
 
-void ex_gpio_set_mode(ex_gpio_port_t port, int pin, bool is_output)
+void ex_gpio_set_mode(int pin, bool is_output)
 {
-	if(port == EX_GPIO_PORT_0 && (pin == 1 || pin == 5 || pin == 6)){
+	if(pin == 1 || pin == 5 || pin == 6){
 		// illegal SWIO and UTX GPIO for now only
-		printf("Illegal port and pin: %d[%d]\r\n", port, pin);
+		printf("Illegal pin: %d\r\n", pin);
 		return;
 	}
 
 	GPIO_InitTypeDef cfg = {
-		.GPIO_Pin = _map_to_gpio_pin(port, pin),
+		.GPIO_Pin = _map_to_gpio_pin(pin),
 		.GPIO_Speed = GPIO_Speed_30MHz,
 		.GPIO_Mode = is_output ? GPIO_Mode_Out_PP : GPIO_Mode_IN_FLOATING,
 	};
 
 	
-	printf("Set as out: %s[0x%X]\r\n", _map_to_gpio_port(port, pin) == GPIOD ? "GPIOD" : (_map_to_gpio_port(port, pin) == GPIOC ? "GPIOC" : "GPIOA"), _map_to_gpio_pin(port, pin));
-	GPIO_Init(_map_to_gpio_port(port, pin), &cfg);
+	printf("Set as out: %s[0x%X]\r\n", _map_to_gpio_port(pin) == GPIOD ? "GPIOD" : (_map_to_gpio_port(pin) == GPIOC ? "GPIOC" : "GPIOA"), _map_to_gpio_pin(pin));
+	GPIO_Init(_map_to_gpio_port(pin), &cfg);
 }
 
-void ex_gpio_output_pin_set(ex_gpio_port_t port, int pin, bool state)
+void ex_gpio_output_pin_set(int pin, bool state)
 {
-	if(port == EX_GPIO_PORT_0 && (pin == 1 || pin == 5 || pin == 6)){
+	if(pin == 1 || pin == 5 || pin == 6){
 		// illegal SWIO and UTX GPIO for now only
-		printf("Illegal port and pin: %d[%d]\r\n", port, pin);
+		printf("Illegal pin: %d\r\n", pin);
 		return;
 	}
 	
-	GPIO_WriteBit(_map_to_gpio_port(port, pin), _map_to_gpio_pin(port, pin), state ? Bit_SET : Bit_RESET);
+	GPIO_WriteBit(_map_to_gpio_port(pin), _map_to_gpio_pin(pin), state ? Bit_SET : Bit_RESET);
 }
 
-uint8_t ex_gpio_input_pin_read(ex_gpio_port_t port, int pin)
+uint8_t ex_gpio_input_pin_read(int pin)
 {
-	return GPIO_ReadInputDataBit(_map_to_gpio_port(port, pin), _map_to_gpio_pin(port, pin));
+	return GPIO_ReadInputDataBit(_map_to_gpio_port(pin), _map_to_gpio_pin(pin));
 }
 
 uint8_t ex_gpio_input_read(ex_gpio_port_t port)
 {
 	uint8_t result = 0;
 	for(int pin = 0; pin < 8; pin++){
-		result += ex_gpio_input_pin_read(port, pin) << pin;
+		result += ex_gpio_input_pin_read(pin + (port == EX_GPIO_PORT_0 ? 0 : 8)) << pin;
 	}
 
 	return result;
 }
 
+int ex_gpio_map_to_adc(int pin)
+{
+	return _TABLE_IDX_TO_ADC_IDX[pin];
+}
 
+
+
+static void __attribute__((interrupt("WCH-Interrupt-fast"))) ADC1_IRQHandler(void)
+{
+    if(ADC_GetITStatus(ADC1, ADC_IT_EOC))
+    {
+		if(_adc_val_cb != NULL){
+			_adc_val_cb(ADC_GetConversionValue(ADC1));
+		}
+    }
+
+    ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
+}
 
 void exp_gpio_adc_init()
 {
@@ -197,6 +177,15 @@ void exp_gpio_adc_init()
 	while(ADC_GetResetCalibrationStatus(ADC1));
 	ADC_StartCalibration(ADC1);
 	while(ADC_GetCalibrationStatus(ADC1));
+
+    NVIC_InitTypeDef irq_cfg = {
+		.NVIC_IRQChannel = ADC_IRQn,
+		.NVIC_IRQChannelPreemptionPriority = 0,
+		.NVIC_IRQChannelSubPriority = 1,
+		.NVIC_IRQChannelCmd = ENABLE,
+	};
+    NVIC_Init(&irq_cfg);
+    ADC_ITConfig(ADC1, ADC_IT_EOC, ENABLE);
 }
 
 void ex_gpio_set_mode_adc(int pin)
@@ -229,9 +218,43 @@ uint16_t ex_gpio_adc_read(int pin)
 	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 	while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
 
-	const uint16_t result = ADC_GetConversionValue(ADC1);
-
-	ADC_SoftwareStartConvCmd(ADC1, DISABLE);
-
-	return result;
+	return ADC_GetConversionValue(ADC1);
 }
+
+void ex_gpio_adc_read_irq(int pin, ex_gpio_adc_cb_t cb)
+{
+	_adc_val_cb = cb;
+
+	if(pin == 1 || pin == 2){
+		// illegal SWIO and UTX GPIO for now only
+		printf("Illegal pin: [%d]\r\n", pin);
+		return;
+	}
+
+	ADC_RegularChannelConfig(ADC1, _map_adc_pin_to_channel(pin), 1, ADC_SampleTime_241Cycles);
+	ADC_ClearFlag(ADC1, ADC_FLAG_EOC);
+	ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+}
+
+int ex_gpio_adc_map_to_gpio(int pin)
+{
+	return _TABLE_ADC_IDX_TO_IDX[pin];
+}
+
+// bool ex_gpio_is_adc(ex_gpio_port_t port, int pin)
+// {
+// 	uint32_t state = _map_to_gpio_port(port, pin)->CFGLR;
+// 	int pin = _map_to_gpio_pin(port, pin);
+// 	uint32_t shift_count = 2;
+// 	for(int bit = 0; bit < 8; bit++){
+// 		if(pin & (1 << bit)){
+// 			shift_count += bit * 4;
+// 			break;
+// 		}
+// 	}
+
+// 	//check if in INPUT mode and mode is ADC
+// 	return ((state >> (shift_count - 2)) & 0x03) == 0 &&
+// 		((state >> shift_count) & 0x03) == 0;
+
+// }
