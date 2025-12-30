@@ -2,13 +2,12 @@
 
 
 
-#include "stdint.h"
-#include "stdbool.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 
 
 #define EX_GPIO_MAX_PIN 16
-#define EX_GPIO_ADC_MAX_PIN 8
 #define EX_GPIO_ILLEGAL_PIN -1
 
 
@@ -22,27 +21,51 @@ typedef enum
 
 
 
-typedef void(*ex_gpio_adc_cb_t)(uint16_t val);
-//
-
-//reads gpio states
-// uint8_t ex_gpio_read_port(ex_gpio_port_t port);
-//set gpio to given states
-// uint8_t ex_gpio_write_port(ex_gpio_port_t port);
-
-
-//Low level
-// init buses and whatever else you need, as default input floating state
+/**
+ * @brief Init whatever hardware you need
+ */
 void ex_gpio_init();
-void ex_gpio_set_mode(int pin, bool is_output);
-void ex_gpio_output_pin_set(int pin, bool state);
-uint8_t ex_gpio_input_pin_read(int pin);
-uint8_t ex_gpio_input_read(ex_gpio_port_t port);
-int ex_gpio_map_to_adc(int pin);
 
-void exp_gpio_adc_init();
-void ex_gpio_set_mode_adc(int pin);
-uint16_t ex_gpio_adc_read(int pin);
-void ex_gpio_adc_read_irq(int pin, ex_gpio_adc_cb_t cb);
-int ex_gpio_adc_map_to_gpio(int pin);
-// bool ex_gpio_is_adc(ex_gpio_port_t port, int pin);
+/**
+ * @brief set input or output mode for given pin
+ * INPUT must be FLOATING
+ * OUTPUT must be PUSH PULL
+ * 
+ * @param pin [0; @def EX_GPIO_MAX_PIN)
+ * @param is_output true is output false is input
+ */
+void ex_gpio_set_mode(int pin, bool is_output);
+
+/**
+ * @brief Sets logic level for given pin
+ * 
+ * @param pin [0; @def EX_GPIO_MAX_PIN)
+ * @param state true equal logical one or HIGH voltage, false is 0
+ */
+void ex_gpio_output_pin_set(int pin, bool state);
+
+/**
+ * @brief reads logic level for single pin 
+ * 
+ * @param pin [0; @def EX_GPIO_MAX_PIN)
+ * @return uint8_t 1 is HIGH, 0 is LOW
+ */
+uint8_t ex_gpio_input_pin_read(int pin);
+
+/**
+ * @brief reads the whole port in to 8 bits
+ * bit 0 is pin 0 for the port,
+ * bit 7 is pin 7 for the port
+ * 
+ * @param port [0; @def EX_GPIO_MAX_PIN)
+ * @return uint8_t each bit position is one pin
+ */
+uint8_t ex_gpio_input_read(ex_gpio_port_t port);
+
+/**
+ * @brief convert GPIO pin to ADC pin if exists
+ * 
+ * @param pin [0; @def EX_GPIO_MAX_PIN)
+ * @return int: ADC pin number or @def EX_GPIO_ILLEGAL_PIN if pin is not ADC 
+ */
+int ex_gpio_map_to_adc(int pin);

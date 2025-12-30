@@ -1,7 +1,8 @@
 #include "debug.h"
 
-#include "ex_gpio.h"
+#include "ex_adc.h"
 #include "ex_core.h"
+#include "ex_gpio.h"
 
 
 
@@ -55,7 +56,7 @@ int main(void)
     Delay_Init();
     USART_Printf_Init(115200);
 	ex_gpio_init();
-	exp_gpio_adc_init();
+	exp_adc_init();
 	// IIC_Init(100000, RXAdderss << 1);
 
     printf("SystemClk:%d\r\n",SystemCoreClock);
@@ -155,8 +156,8 @@ int main(void)
 				ex_gpio_set_mode(pin, false);
 				printf("Enabled %d as input: %d\r\n", pin, ex_gpio_input_pin_read(pin));
 			}else if(data == 'a'){
-				ex_gpio_set_mode_adc(pin % EX_GPIO_ADC_MAX_PIN);
-				printf("Enabled [%d] as ADC input: %d\r\n", pin % EX_GPIO_ADC_MAX_PIN, ex_gpio_adc_read(pin % EX_GPIO_ADC_MAX_PIN));
+				ex_adc_enable_pin(pin % EX_ADC_MAX_PIN);
+				printf("Enabled [%d] as ADC input: %d\r\n", pin % EX_ADC_MAX_PIN, ex_adc_read(pin % EX_ADC_MAX_PIN));
 			}else{
 				printf("Enabling [%d] as output high:\r\n", pin);
 				ex_gpio_set_mode(pin, true);

@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "ex_gpio.h"
+#include "ex_adc.h"
 
 
 
@@ -89,7 +90,7 @@ static void _write_io_reg(uint8_t reg, uint8_t port_value){
 				//skip
 				continue;
 			}
-			// ex_gpio_adc_map_to_gpio()
+			// ex_adc_map_to_gpio()
 			ex_gpio_set_mode(pin, _BIT_VALUE(port_value, bit));
 		// }
 	}
@@ -125,7 +126,7 @@ static void _write_adc_cfg_reg(uint8_t port_value)
 	for(int pin = 0; pin < 8; pin++){
 		// if(!_CMP_BITS(_regs.adc_io, port_value, pin)){
 		if(_BIT_VALUE(port_value, pin)){
-			ex_gpio_set_mode_adc(pin);
+			ex_adc_enable_pin(pin);
 			// }else{
 				//TODO: configure from current settings
 				//need map from adc pin to gpio pin
@@ -138,7 +139,7 @@ static void _write_adc_cfg_reg(uint8_t port_value)
 
 // static void _write_adc_data(uint8_t pin_value)
 // {
-// 	ex_gpio_adc_read(pin_value);
+// 	ex_adc_read(pin_value);
 // }
 
 
@@ -171,56 +172,56 @@ void ex_core_set_read_reg(uint8_t reg)
 		case _REG_ADC_DATA_0_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 0)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(0, &_adc_cb);
+				ex_adc_read_irq(0, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_1_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 1)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(1, &_adc_cb);
+				ex_adc_read_irq(1, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_2_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 2)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(2, &_adc_cb);
+				ex_adc_read_irq(2, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_3_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 3)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(3, &_adc_cb);
+				ex_adc_read_irq(3, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_4_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 4)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(4, &_adc_cb);
+				ex_adc_read_irq(4, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_5_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 5)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(5, &_adc_cb);
+				ex_adc_read_irq(5, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_6_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 6)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(6, &_adc_cb);
+				ex_adc_read_irq(6, &_adc_cb);
 			}
 			break;
 
 		case _REG_ADC_DATA_7_H:
 			if(_regs.read_reg_val != _REG_ADC_STATUS && _BIT_VALUE(_regs.adc_io, 7)){
 				_regs.adc_status = _STATUS_BUSY;
-				ex_gpio_adc_read_irq(7, &_adc_cb);
+				ex_adc_read_irq(7, &_adc_cb);
 			}
 			break;
 	
