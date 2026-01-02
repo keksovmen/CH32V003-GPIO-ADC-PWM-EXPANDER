@@ -72,6 +72,7 @@ int main(void)
 	int nop_reads = 0;
 	uint8_t reg = 0;
 	bool is_second_read = false;
+	int read = 0;
     while(1)
     {
 		const ex_i2c_event_t event =  ex_i2c_pull();
@@ -84,18 +85,23 @@ int main(void)
 		nop_reads = 0;
 
 		if(event == EX_I2C_EVENT_WRITE_REQ){
-			//is this second read or not?
-			if(is_second_read){
-				is_second_read = false;
-				const uint8_t data = ex_i2c_slave_read();
-				ex_core_write(reg, data);
+			read++;
 
-				printf("READ_2 = %d\r\n", data);
-			}else{
-				reg = ex_i2c_slave_read();
-				is_second_read = true;
+			uint8_t tmp = 0;
+			while(ex_i2c_slave_read(&tmp)){
+				//is this second read or not?
+				if(is_second_read){
+					is_second_read = false;
+					const uint8_t data = tmp;
+					ex_core_write(reg, data);
 
-				printf("READ_1 = %d\r\n", reg);
+					printf("READ_2 = %d\r\n", data);
+				}else{
+					reg = tmp;
+					is_second_read = true;
+
+					printf("READ_1 = %d\r\n", reg);
+				}
 			}
 		}else if (event == EX_I2C_EVENT_READ_REQ){
 			is_second_read = false;

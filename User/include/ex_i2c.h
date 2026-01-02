@@ -21,4 +21,4 @@ void ex_i2c_slave_init(int clock_hz, uint8_t address);
 ex_i2c_event_t ex_i2c_pull();
 
 void ex_i2c_slave_write(uint8_t data, bool generate_stop);
-uint8_t ex_i2c_slave_read();
+bool ex_i2c_slave_read(uint8_t* out);

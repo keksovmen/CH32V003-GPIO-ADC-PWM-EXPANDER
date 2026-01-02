@@ -41,13 +41,13 @@ ex_i2c_event_t ex_i2c_pull()
 	const uint32_t last_event = I2C_GetLastEvent(I2C1);
 	// const bool address_match = I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR) == SET;
 	if((last_event & I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED) == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED || 
-		(last_event & I2C_EVENT_SLAVE_BYTE_TRANSMITTED) == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
+		(last_event & I2C_EVENT_SLAVE_BYTE_RECEIVED) == I2C_EVENT_SLAVE_BYTE_RECEIVED)
 	{
 		//receiver mode, or data is ready to be written
 		return EX_I2C_EVENT_WRITE_REQ;
 
 	}else if((last_event & I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED) == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED || 
-		(last_event & I2C_EVENT_SLAVE_BYTE_RECEIVED) == I2C_EVENT_SLAVE_BYTE_RECEIVED)
+		(last_event & I2C_EVENT_SLAVE_BYTE_TRANSMITTED) == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
 	{
 		//transmitter mode, or data is ready to be read
 		return EX_I2C_EVENT_READ_REQ;
@@ -84,16 +84,35 @@ void ex_i2c_slave_write(uint8_t data, bool generate_stop)
 	((void) I2C_ReadRegister(I2C1, I2C_Register_STAR1));
 	I2C_SendData(I2C1, data);
 	if(generate_stop){
-		I2C_GenerateSTOP(I2C1, SET);
-	}
-	//wait for data send finish?
-	while (I2C_GetFlagStatus(I2C1, I2C_FLAG_TXE) == RESET)
-	{
-		//wait for transfer finished
+		I2C_GenerateSTOP(I2C1, ENABLE);
+	}else{
+		//wait for data send finish?
+		while (I2C_GetFlagStatus(I2C1, I2C_FLAG_TXE) == RESET)
+		{
+			//wait for transfer finished
+		}
 	}
 }
 
-uint8_t ex_i2c_slave_read()
+bool ex_i2c_slave_read(uint8_t* out)
 {
-	return I2C_ReceiveData(I2C1);
+	static const uint16_t rxne = I2C_FLAG_RXNE & 0x0000FFFF;
+	static const uint16_t stop = I2C_FLAG_STOPF & 0x0000FFFF;
+
+	uint16_t sr1 = I2C_ReadRegister(I2C1, I2C_Register_STAR1);
+
+	bool rx_flag = (sr1 & rxne) == rxne;
+	bool stop_flag = (sr1 & stop) == stop;
+	//wait for data in buffer
+	while (!rx_flag && !stop_flag)
+	{
+		sr1 = I2C_ReadRegister(I2C1, I2C_Register_STAR1);
+		rx_flag = (sr1 & rxne) == rxne;
+		stop_flag = (sr1 & stop) == stop;
+	}
+
+
+	*out = I2C_ReceiveData(I2C1);
+	
+	return rx_flag;
 }
