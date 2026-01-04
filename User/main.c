@@ -81,7 +81,7 @@ int main(void)
 			continue;
 		}
 
-		printf("NONE = %d\r\n", nop_reads);
+		// printf("NONE = %d, E = %c\r\n", nop_reads, event == EX_I2C_EVENT_READ_REQ ? 'R' : 'W');
 		nop_reads = 0;
 
 		if(event == EX_I2C_EVENT_WRITE_REQ){
@@ -107,6 +107,7 @@ int main(void)
 			is_second_read = false;
 			const uint8_t data = ex_core_read();
 			ex_i2c_slave_write(data, true);
+
 			printf("WRITE = %d\r\n", data);
 		}
 
