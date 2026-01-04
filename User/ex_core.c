@@ -38,6 +38,7 @@ static _registers_t _regs = {
 static void _adc_cb(uint16_t val){
 	_regs.adc_data = val;
 	_regs.adc_status = EX_PROTOCOL_STATUS_READY;
+	// printf("ADC: %u\r\n", val);
 }
 
 
@@ -134,51 +135,16 @@ void ex_core_write(uint8_t reg, uint8_t value)
 		case EX_PROTOCOL_REG_ADC_CFG:
 			_write_adc_cfg_reg(value);
 			break;
+		
+		case EX_PROTOCOL_REG_ADC_START:
+			_trigger_adc_call(value);
+			break;
 	}
 }
 
 void ex_core_set_read_reg(uint8_t reg)
 {
 	_regs.read_reg_val = reg;
-
-	//do stuff like adc calls
-	switch (reg)
-	{
-		case EX_PROTOCOL_REG_ADC_DATA_0_H:
-			_trigger_adc_call(0);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_1_H:
-			_trigger_adc_call(1);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_2_H:
-			_trigger_adc_call(2);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_3_H:
-			_trigger_adc_call(3);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_4_H:
-			_trigger_adc_call(4);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_5_H:
-			_trigger_adc_call(5);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_6_H:
-			_trigger_adc_call(6);
-			break;
-
-		case EX_PROTOCOL_REG_ADC_DATA_7_H:
-			_trigger_adc_call(7);
-			break;
-	
-		default:
-			break;
-	}
 }
 
 uint8_t ex_core_read()
@@ -196,25 +162,11 @@ uint8_t ex_core_read()
 		case EX_PROTOCOL_REG_GPIO_B:
 			return ex_gpio_input_read(EX_GPIO_PORT_1);
 		
-		case EX_PROTOCOL_REG_ADC_DATA_0_H:
-		case EX_PROTOCOL_REG_ADC_DATA_1_H:
-		case EX_PROTOCOL_REG_ADC_DATA_2_H:
-		case EX_PROTOCOL_REG_ADC_DATA_3_H:
-		case EX_PROTOCOL_REG_ADC_DATA_4_H:
-		case EX_PROTOCOL_REG_ADC_DATA_5_H:
-		case EX_PROTOCOL_REG_ADC_DATA_6_H:
-		case EX_PROTOCOL_REG_ADC_DATA_7_H:
+		case EX_PROTOCOL_REG_ADC_VAL_H:
 			_regs.have_read_adc = true;
 			return (_regs.adc_data >> 8) & 0xFF;
 		
-		case EX_PROTOCOL_REG_ADC_DATA_0_L:
-		case EX_PROTOCOL_REG_ADC_DATA_1_L:
-		case EX_PROTOCOL_REG_ADC_DATA_2_L:
-		case EX_PROTOCOL_REG_ADC_DATA_3_L:
-		case EX_PROTOCOL_REG_ADC_DATA_4_L:
-		case EX_PROTOCOL_REG_ADC_DATA_5_L:
-		case EX_PROTOCOL_REG_ADC_DATA_6_L:
-		case EX_PROTOCOL_REG_ADC_DATA_7_L:
+		case EX_PROTOCOL_REG_ADC_VAL_L:
 			return _regs.adc_data & 0xFF;
 
 		case EX_PROTOCOL_REG_ADC_CFG:

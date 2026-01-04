@@ -49,7 +49,7 @@ void ex_gpio_init()
 void ex_gpio_set_mode(int pin, bool is_output)
 {
 	if(pin == 1 || pin == 5 || pin == 6){
-		// illegal SWIO and UTX GPIO for now only
+		// illegal SWIO and UART GPIO for now only
 		printf("Illegal pin: %d\r\n", pin);
 		return;
 	}
@@ -68,7 +68,7 @@ void ex_gpio_set_mode(int pin, bool is_output)
 void ex_gpio_output_pin_set(int pin, bool state)
 {
 	if(pin == 1 || pin == 5 || pin == 6){
-		// illegal SWIO and UTX GPIO for now only
+		// illegal SWIO and UART GPIO for now only
 		printf("Illegal pin: %d\r\n", pin);
 		return;
 	}

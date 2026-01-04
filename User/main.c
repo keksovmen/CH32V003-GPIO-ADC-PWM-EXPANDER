@@ -99,6 +99,7 @@ int main(void)
 				}else{
 					reg = tmp;
 					is_second_read = true;
+					ex_core_set_read_reg(reg);
 
 					printf("READ_1 = %d\r\n", reg);
 				}
@@ -108,7 +109,7 @@ int main(void)
 			const uint8_t data = ex_core_read();
 			ex_i2c_slave_write(data, true);
 
-			printf("WRITE = %d\r\n", data);
+			printf("WRITE = [%d]%d\r\n", reg, data);
 		}
 
 		// I2C_SoftwareResetCmd(I2C1, ENABLE);

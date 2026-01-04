@@ -40,20 +40,20 @@ ex_i2c_event_t ex_i2c_pull()
 	//it reads both status registers, so if you need to send data you must hurry to put it there
 	const uint32_t last_event = I2C_GetLastEvent(I2C1);
 	// const bool address_match = I2C_GetFlagStatus(I2C1, I2C_FLAG_ADDR) == SET;
-	if(last_event == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED || 
-		(last_event & I2C_EVENT_SLAVE_BYTE_RECEIVED) == I2C_EVENT_SLAVE_BYTE_RECEIVED)
-	{
-		printf("0x%X\r\n", last_event);
-		//receiver mode, or data is ready to be written
-		return EX_I2C_EVENT_WRITE_REQ;
 
-	}else if(last_event == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED || 
+	if((last_event & I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED) == I2C_EVENT_SLAVE_TRANSMITTER_ADDRESS_MATCHED || 
 		(last_event & I2C_EVENT_SLAVE_BYTE_TRANSMITTED) == I2C_EVENT_SLAVE_BYTE_TRANSMITTED)
 	{
 		printf("0x%X\r\n", last_event);
 		//transmitter mode, or data is ready to be read
 		return EX_I2C_EVENT_READ_REQ;
 
+	}else if((last_event & I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED) == I2C_EVENT_SLAVE_RECEIVER_ADDRESS_MATCHED || 
+		(last_event & I2C_EVENT_SLAVE_BYTE_RECEIVED) == I2C_EVENT_SLAVE_BYTE_RECEIVED)
+	{
+		printf("0x%X\r\n", last_event);
+		//receiver mode, or data is ready to be written
+		return EX_I2C_EVENT_WRITE_REQ;
 	}else{
 		//nothing, just exit, and fix errors
 		//when in slave transceiver mode, and master didn't send ACK on received byte
@@ -123,7 +123,6 @@ bool ex_i2c_slave_read(uint8_t* out)
 	*out = I2C_ReceiveData(I2C1);
 
 	if(addr_flag){
-		printf("ADDR TRUE\r\n");
 		static bool addr_first_time = true;
 
 		if(addr_first_time){

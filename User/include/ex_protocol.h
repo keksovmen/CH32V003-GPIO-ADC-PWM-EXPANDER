@@ -29,42 +29,49 @@
  */
 #define EX_PROTOCOL_REG_GPIO_B 0x13
 
+
+
 /**
- * @brief ADC custom register
+ * @brief ADC custom registers
  * Algorithm to read ADC values:
- * - send write request (I2C write with corresponding _ADC_DATA_X_H register as value) to initiate ADC calculation
- * - now reed @def EX_PROTOCOL_REG_ADC_STATUS (I2C read = I2C write with register as value then read request)
+ * - write to reg @ref EX_PROTOCOL_REG_ADC_START (where value is pin to measure) to initiate ADC calculation
+ * - now reed @ref EX_PROTOCOL_REG_ADC_STATUS (I2C read = I2C write with register as value then read request)
  * 		if you get @ref EX_PROTOCOL_STATUS_BUSY then result is not ready, it is ready when @ref EX_PROTOCOL_STATUS_BUSY
  * - now read (I2C read -> write with arg and then read)
- * 		_ADC_DATA_X_H register and then _ADC_DATA_X_L register,
+ * 		@ref EX_PROTOCOL_REG_ADC_VAL_H register and then @ref EX_PROTOCOL_REG_ADC_VAL_L register,
  * 		H is higher 8 bits and L is lower: uint16_t val = (H << 8) + L
  * - or you just can wait some time say 1ms (TODO: calculate 241 cycle at 24MHZ) and then read again
  */
-#define EX_PROTOCOL_REG_ADC_DATA_0_H 0x20
-#define EX_PROTOCOL_REG_ADC_DATA_0_L 0x21
-#define EX_PROTOCOL_REG_ADC_DATA_1_H 0x22
-#define EX_PROTOCOL_REG_ADC_DATA_1_L 0x23
-#define EX_PROTOCOL_REG_ADC_DATA_2_H 0x24
-#define EX_PROTOCOL_REG_ADC_DATA_2_L 0x25
-#define EX_PROTOCOL_REG_ADC_DATA_3_H 0x26
-#define EX_PROTOCOL_REG_ADC_DATA_3_L 0x27
-#define EX_PROTOCOL_REG_ADC_DATA_4_H 0x28
-#define EX_PROTOCOL_REG_ADC_DATA_4_L 0x29
-#define EX_PROTOCOL_REG_ADC_DATA_5_H 0x2A
-#define EX_PROTOCOL_REG_ADC_DATA_5_L 0x2B
-#define EX_PROTOCOL_REG_ADC_DATA_6_H 0x2C
-#define EX_PROTOCOL_REG_ADC_DATA_6_L 0x2D
-#define EX_PROTOCOL_REG_ADC_DATA_7_H 0x2E
-#define EX_PROTOCOL_REG_ADC_DATA_7_L 0x2F
 
 /**
  * @brief Works as IODIR register but 1 overrides the IODIR reg value and sets pin to ADC mode
  * writing 0 to previously 1, doesn't change anything
  * only drops the protection for further IODIR configuration
  */
-#define EX_PROTOCOL_REG_ADC_CFG 0x30
+#define EX_PROTOCOL_REG_ADC_CFG 0x20
+
 /**
  * @brief Used to get ADC measurement state
+ * @ref EX_PROTOCOL_STATUS_READY
+ * @ref EX_PROTOCOL_STATUS_BUSY
+ */
+#define EX_PROTOCOL_REG_ADC_STATUS 0x21
+
+/**
+ * @brief high 8 bits of value
+ */
+#define EX_PROTOCOL_REG_ADC_VAL_H 0x22
+
+/**
+ * @brief low 8 bits of value
+ */
+#define EX_PROTOCOL_REG_ADC_VAL_L 0x23
+
+/**
+ * @brief Write to this register desired pin to measure ADC,
+ * if pin is enabled as ADC then measurement will start
+ * 
+ * Data is: pin [0; 7], 
  * 
  */
-#define EX_PROTOCOL_REG_ADC_STATUS 0x31
+#define EX_PROTOCOL_REG_ADC_START 0x24

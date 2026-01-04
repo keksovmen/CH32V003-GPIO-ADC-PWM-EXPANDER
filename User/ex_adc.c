@@ -28,17 +28,6 @@ static ex_adc_cb_t _adc_val_cb = NULL;
 
 
 
-static void __attribute__((interrupt("WCH-Interrupt-fast"))) ADC1_IRQHandler(void)
-{
-	if(ADC_GetITStatus(ADC1, ADC_IT_EOC))
-	{
-		if(_adc_val_cb != NULL){
-			_adc_val_cb(ADC_GetConversionValue(ADC1));
-		}
-	}
-
-	ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
-}
 
 
 
@@ -55,6 +44,21 @@ static int _map_adc_pin_to_gpio_pin(int pin)
 static int _map_adc_pin_to_channel(int pin)
 {
 	return _TABLE_ADC_IDX_TO_CHANNEL[pin];
+}
+
+
+
+//interrupts can't be static due to weak references and we need to override it
+void __attribute__((interrupt("WCH-Interrupt-fast"))) ADC1_IRQHandler(void)
+{
+	if(ADC_GetITStatus(ADC1, ADC_IT_EOC))
+	{
+		if(_adc_val_cb != NULL){
+			_adc_val_cb(ADC_GetConversionValue(ADC1));
+		}
+	}
+
+	ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
 }
 
 
@@ -93,6 +97,7 @@ void exp_adc_init()
 
 void ex_adc_enable_pin(int pin)
 {
+	//UART pins for debug
 	if(pin == 1 || pin == 2){
 		// illegal SWIO and UTX GPIO for now only
 		printf("Illegal pin: [%d]\r\n", pin);
@@ -110,6 +115,7 @@ void ex_adc_enable_pin(int pin)
 
 uint16_t ex_adc_read(int pin)
 {
+	//UART pins for debug
 	if(pin == 1 || pin == 2){
 		// illegal SWIO and UTX GPIO for now only
 		printf("Illegal pin: [%d]\r\n", pin);
