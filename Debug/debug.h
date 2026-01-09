@@ -28,8 +28,11 @@
 
 /* DEBUG UATR Definition */
 #ifndef DEBUG
-#define DEBUG   DEBUG_UART1_NoRemap
+#define DEBUG   DEBUG_UART1_Remap2
 #endif
+
+/* Comment to disable UART init and printf functional */
+// #define ENABLE_DEBUG
 
 /* SDI Printf Definition */
 #define SDI_PR_CLOSE   0

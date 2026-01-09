@@ -59,7 +59,7 @@
 					"other_target_flags": ""
 				},
 				"optimization": {
-					"level": "debug",
+					"level": "most",
 					"message_length": true,
 					"char_is_signed": true,
 					"function_sections": true,
@@ -590,11 +590,11 @@
 		]
 	},
 	"flashConfig": {
-		"mcutype": "CH32V00x",
+		"mcutype": "CH32V003",
 		"address": "0x08000000",
 		"target_path": "obj/gpio_expander.hex",
 		"clkSpeed": "High",
-		"debug_interface_mode": "1-wire serial",
+		"debug_interface_mode": "",
 		"erase": true,
 		"program": true,
 		"verify": true,
@@ -623,7 +623,7 @@
 			"enableNoZeroWaitingAreaFlash": false
 		},
 		"gdbCfg": {
-			"executable": "${WCH:Toolchain:GCC8}",
+			"executable": "${WCH:Toolchain:GCC12}",
 			"options": [],
 			"commands": [
 				"set mem inaccessible-by-default off",

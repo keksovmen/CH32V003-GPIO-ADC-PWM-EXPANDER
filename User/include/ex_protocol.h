@@ -2,6 +2,13 @@
 
 
 
+#define EX_PROTOCOL_DEFAULT_I2C_ADDRESS 0x40
+
+
+
+/**
+ * @brief used for ADC conversion checks
+ */
 #define EX_PROTOCOL_STATUS_READY 0x00
 #define EX_PROTOCOL_STATUS_BUSY 0x01
 

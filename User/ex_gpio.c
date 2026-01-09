@@ -14,7 +14,7 @@ static GPIO_TypeDef* const _TABLE_IDX_TO_PORT[EX_GPIO_MAX_PIN] = {
 
 static const int _TABLE_IDX_TO_PIN[EX_GPIO_MAX_PIN] = {
 	GPIO_Pin_0, GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7,
-	GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_1, GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7
+	GPIO_Pin_1, GPIO_Pin_2, GPIO_Pin_0, GPIO_Pin_3, GPIO_Pin_4, GPIO_Pin_5, GPIO_Pin_6, GPIO_Pin_7
 };
 
 static const int _TABLE_IDX_TO_ADC_IDX[EX_GPIO_MAX_PIN] = {
@@ -48,7 +48,7 @@ void ex_gpio_init()
 
 void ex_gpio_set_mode(int pin, bool is_output)
 {
-	if(pin == 1 || pin == 5 || pin == 6){
+	if(pin == 1){
 		// illegal SWIO and UART GPIO for now only
 		printf("Illegal pin: %d\r\n", pin);
 		return;
@@ -61,17 +61,19 @@ void ex_gpio_set_mode(int pin, bool is_output)
 	};
 
 	
-	printf("Set as out: %s[0x%X]\r\n", _map_to_gpio_port(pin) == GPIOD ? "GPIOD" : (_map_to_gpio_port(pin) == GPIOC ? "GPIOC" : "GPIOA"), _map_to_gpio_pin(pin));
+	printf("Set as %s: %s[0x%X]\r\n", is_output ? "OUT" : "IN", _map_to_gpio_port(pin) == GPIOD ? "GPIOD" : (_map_to_gpio_port(pin) == GPIOC ? "GPIOC" : "GPIOA"), _map_to_gpio_pin(pin));
 	GPIO_Init(_map_to_gpio_port(pin), &cfg);
 }
 
 void ex_gpio_output_pin_set(int pin, bool state)
 {
-	if(pin == 1 || pin == 5 || pin == 6){
+	if(pin == 1){
 		// illegal SWIO and UART GPIO for now only
 		printf("Illegal pin: %d\r\n", pin);
 		return;
 	}
+
+	printf("Set %d to %d\r\n", pin, state);
 	
 	GPIO_WriteBit(_map_to_gpio_port(pin), _map_to_gpio_pin(pin), state ? Bit_SET : Bit_RESET);
 }

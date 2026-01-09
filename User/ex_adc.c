@@ -98,7 +98,7 @@ void exp_adc_init()
 void ex_adc_enable_pin(int pin)
 {
 	//UART pins for debug
-	if(pin == 1 || pin == 2){
+	if(pin == 2){
 		// illegal SWIO and UTX GPIO for now only
 		printf("Illegal pin: [%d]\r\n", pin);
 		return;
@@ -111,12 +111,14 @@ void ex_adc_enable_pin(int pin)
 	};
 
 	GPIO_Init(_map_adc_pin_to_gpio_port(pin), &cfg);
+	
+	printf("Enabled ADC: %d\r\n", pin);
 }
 
 uint16_t ex_adc_read(int pin)
 {
 	//UART pins for debug
-	if(pin == 1 || pin == 2){
+	if(pin == 2){
 		// illegal SWIO and UTX GPIO for now only
 		printf("Illegal pin: [%d]\r\n", pin);
 		return -1;
@@ -134,7 +136,7 @@ void ex_adc_read_irq(int pin, ex_adc_cb_t cb)
 {
 	_adc_val_cb = cb;
 
-	if(pin == 1 || pin == 2){
+	if(pin == 2){
 		// illegal SWIO and UTX GPIO for now only
 		printf("Illegal pin: [%d]\r\n", pin);
 		return;
