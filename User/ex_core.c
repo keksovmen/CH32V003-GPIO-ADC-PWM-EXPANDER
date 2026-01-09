@@ -60,7 +60,7 @@ static void _write_io_reg(uint8_t reg, uint8_t port_value){
 				continue;
 			}
 			// ex_adc_map_to_gpio()
-			ex_gpio_set_mode(pin, _BIT_VALUE(port_value, bit));
+			ex_gpio_set_mode(pin, !_BIT_VALUE(port_value, bit));
 		// }
 	}
 
@@ -108,11 +108,17 @@ static void _write_adc_cfg_reg(uint8_t port_value)
 
 static void _trigger_adc_call(int pin)
 {
-	//only if the pin is ADC, and adc was read before
-	if(_regs.have_read_adc && _BIT_VALUE(_regs.adc_io, pin)){
-		_regs.adc_status = EX_PROTOCOL_STATUS_BUSY;
-		_regs.have_read_adc = false;
-		ex_adc_read_irq(pin, &_adc_cb);
+	//skip if we have unread value
+	if(_regs.have_read_adc){
+		//trigger adc measurement only if PIN is ADC
+		if(_BIT_VALUE(_regs.adc_io, pin)){
+			_regs.adc_status = EX_PROTOCOL_STATUS_BUSY;
+			_regs.have_read_adc = false;
+			ex_adc_read_irq(pin, &_adc_cb);
+		}else{
+			//otherwise indicate an error
+			_regs.adc_status = EX_PROTOCOL_STATUS_ERROR;
+		}
 	}
 }
 

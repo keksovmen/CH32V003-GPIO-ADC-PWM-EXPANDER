@@ -4,11 +4,7 @@
 #include "ex_core.h"
 #include "ex_gpio.h"
 #include "ex_i2c.h"
-
-
-
-#define RXAdderss   0x40
-#define TXAdderss   0x40
+#include "ex_protocol.h"
 
 
 
@@ -24,7 +20,7 @@ int main(void)
 
 	ex_gpio_init();
 	exp_adc_init();
-	ex_i2c_slave_init(100000, RXAdderss);
+	ex_i2c_slave_init(100000, EX_PROTOCOL_DEFAULT_I2C_ADDRESS);
 
     printf("SystemClk:%d\r\n",SystemCoreClock);
     printf( "ChipID:%08x\r\n", DBGMCU_GetCHIPID() );

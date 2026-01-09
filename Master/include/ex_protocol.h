@@ -1,3 +1,7 @@
+/**
+ * @brief must be MCP23017 compatable
+ */
+
 #pragma once
 
 
@@ -11,15 +15,19 @@
  */
 #define EX_PROTOCOL_STATUS_READY 0x00
 #define EX_PROTOCOL_STATUS_BUSY 0x01
+/**
+ * @brief when called for ADC measurement, but pin is not ADC configured
+ */
+#define EX_PROTOCOL_STATUS_ERROR 0x02
 
 /**
- * @brief same as MCP23017, 0 set pin as input, 1 as output,
+ * @brief same as MCP23017, 1 set pin as input, 0 as output,
  * works for pins [0; 7]
  */
 #define EX_PROTOCOL_REG_IODIR_A 0x00
 
 /**
- * @brief same as MCP23017, 0 set pin as input, 1 as output,
+ * @brief same as MCP23017, 1 set pin as input, 0 as output,
  * works for pins [8; 15]
  */
 #define EX_PROTOCOL_REG_IODIR_B 0x01

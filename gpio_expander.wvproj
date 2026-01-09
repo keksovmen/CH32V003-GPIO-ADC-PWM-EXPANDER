@@ -142,7 +142,8 @@
 							"${project}/Core",
 							"${project}/User",
 							"${project}/Peripheral/inc",
-							"${project}/User/include"
+							"${project}/User/include",
+							"${project}/Master/include"
 						],
 						"include_system_paths": [],
 						"include_files": []
@@ -590,11 +591,11 @@
 		]
 	},
 	"flashConfig": {
-		"mcutype": "CH32V003",
+		"mcutype": "CH32V00x",
 		"address": "0x08000000",
 		"target_path": "obj/gpio_expander.hex",
 		"clkSpeed": "High",
-		"debug_interface_mode": "",
+		"debug_interface_mode": "1-wire serial",
 		"erase": true,
 		"program": true,
 		"verify": true,
