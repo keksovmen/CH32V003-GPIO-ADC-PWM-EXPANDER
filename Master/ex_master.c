@@ -15,16 +15,16 @@
 // Private helper functions
 static bool write_register(ex_master_t* master, uint8_t reg, uint8_t value) {
     uint8_t buffer[2] = {reg, value};
-    return master->i2c->write_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, buffer, 2);
+    return master->i2c.write_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, buffer, 2);
 }
 
 static bool read_register(ex_master_t* master, uint8_t reg, uint8_t* value) {
     // Write register address
-    if (!master->i2c->write_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, &reg, 1)) {
+    if (!master->i2c.write_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, &reg, 1)) {
         return false;
     }
     // Read register value
-    return master->i2c->read_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, value, 1);
+    return master->i2c.read_cb(EX_PROTOCOL_DEFAULT_I2C_ADDRESS, value, 1);
 }
 
 
@@ -35,7 +35,7 @@ bool ex_master_init(ex_master_t* master, ex_i2c_t* i2c) {
         return false;
     }
     
-    master->i2c = i2c;
+    master->i2c = *i2c;
     master->dirA = 0xFF;  // Default all inputs (MCP23017: 1=input, 0=output)
     master->dirB = 0xFF;
     master->outA = 0x00;  // Default low output

@@ -2,6 +2,12 @@
 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+
 #include "ex_i2c.h"
 
 
@@ -48,7 +54,7 @@ typedef enum
 
 typedef struct
 {
-	ex_i2c_t* i2c;
+	ex_i2c_t i2c;
 	uint8_t dirA;
 	uint8_t dirB;
 	uint8_t outA;
@@ -134,3 +140,9 @@ bool ex_master_set_pin_adc_mode(ex_master_t* master, ex_master_adc_pin_t pin, bo
  * @return false 
  */
 bool ex_master_adc_read(ex_master_t* master, ex_master_adc_pin_t pin, uint16_t* out);
+
+
+
+#ifdef __cplusplus
+}
+#endif

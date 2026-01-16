@@ -2,6 +2,10 @@
 
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -38,3 +42,9 @@ typedef struct
 	ex_i2c_write_ft write_cb;
 	ex_i2c_read_ft read_cb;
 } ex_i2c_t;
+
+
+
+#ifdef __cplusplus
+}
+#endif
